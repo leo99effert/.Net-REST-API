@@ -8,8 +8,8 @@ namespace Services.CharacterService
   public class CharacterService : ICharacterService
   {
     private static List<Character> characters = new List<Character> {
-            new Character(),
-            new Character{ Id = 1, Name = "Sam" }
+        new Character(),
+        new Character{ Id = 1, Name = "Sam" }
     };
     public List<Character> AddCharacter(Character newCharacter)
     {
@@ -24,7 +24,12 @@ namespace Services.CharacterService
 
     public Character GetCharacterById(int id)
     {
-      return characters.FirstOrDefault(c => c.Id == id);
+      var character = characters.FirstOrDefault(c => c.Id == id);
+      if (character is not null)
+        return character;
+
+      throw new Exception("Character not found");  
+
     }
   }
 }
