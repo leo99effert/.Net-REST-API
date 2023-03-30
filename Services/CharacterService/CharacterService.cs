@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 namespace Services.CharacterService
 {
   public class CharacterService : ICharacterService

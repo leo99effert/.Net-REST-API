@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Models
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]

@@ -1,6 +1,3 @@
-global using Microsoft.AspNetCore.Mvc;
-global using Dtos.User;
-
 namespace Controllers
 {
   [ApiController]

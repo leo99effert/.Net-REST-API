@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace Dtos.Fight
 {
-    public class AttackResultDto
+  public class AttackResultDto
     {
         public string Attacker { get; set; } = string.Empty;
         public string Opponent { get; set; } = string.Empty;

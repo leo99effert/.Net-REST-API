@@ -1,15 +1,24 @@
 global using Models;
-global using Services.CharacterService;
-global using Dtos.Character;
-global using AutoMapper;
-global using Microsoft.EntityFrameworkCore;
 global using Data;
+global using Dtos.User;
+global using Dtos.Character;
+global using Dtos.Weapon;
+global using Dtos.Skill;
+global using Dtos.Fight;
+global using AutoMapper;
+global using Services.CharacterService;
+global using Services.WeaponService;
+global using Services.FightService;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.EntityFrameworkCore;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Swashbuckle.AspNetCore.Filters;
-using Microsoft.OpenApi.Models;
-using Services.WeaponService;
-using Services.FightService;
+global using Microsoft.IdentityModel.Tokens;
+global using Swashbuckle.AspNetCore.Filters;
+global using Microsoft.OpenApi.Models;
+global using System.Security.Claims;
+global using System.Text.Json.Serialization;
+global using System.IdentityModel.Tokens.Jwt;
+global using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +42,8 @@ builder.Services.AddSwaggerGen(c => {
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddScoped<ICharacterService, CharacterService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IWeaponService, WeaponService>();
+builder.Services.AddScoped<IFightService, FightService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
@@ -46,8 +57,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             };
     });
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IWeaponService, WeaponService>();
-builder.Services.AddScoped<IFightService, FightService>();
 
 
 var app = builder.Build();

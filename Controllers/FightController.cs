@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dtos.Fight;
-using Services.FightService;
-
 namespace Controllers
 {
   [ApiController]
