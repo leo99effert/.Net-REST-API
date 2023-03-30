@@ -47,7 +47,7 @@ namespace Services.FightService
               attackUsed = attacker.Weapon.Name;
               damage = DoWeaponAttack(attacker, opponent);
             }
-            else if(!useWeapon && attacker.Skills is not null)
+            else if(!useWeapon && attacker.Skills is not null && attacker.Skills.Count > 0)
             {
               var skill = attacker.Skills[new Random().Next(attacker.Skills.Count)];
               attackUsed = skill.Name;
