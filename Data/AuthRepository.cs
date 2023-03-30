@@ -117,5 +117,17 @@ namespace Data
 
       return tokenHandler.WriteToken(token);
     }
+
+    public async Task<ServiceResponse<int>> Delete(int userId)
+    {
+      var response = new ServiceResponse<int>();
+
+      var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+      _context.Users.Remove(user);
+      await _context.SaveChangesAsync();
+
+      response.Data = user.Id;
+      return response;
+    }
   }
 }
