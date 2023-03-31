@@ -5,32 +5,50 @@ namespace Services.CharacterService
     private readonly IMapper _mapper;
     private readonly DataContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
-
     public CharacterService(IMapper mapper, DataContext context, IHttpContextAccessor httpContextAccessor)
     {
       _httpContextAccessor = httpContextAccessor;
       _context = context;
       _mapper = mapper;
     }
-
     private int GetUserId() => int.Parse(_httpContextAccessor.HttpContext!.User
       .FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    public async Task<ServiceResponse<List<GetCharacterDto>>> AddCharacter(AddCharacterDto newCharacter)
+    public async Task<ServiceResponse<List<GetCharacterDto>>> GetCharacterWithUser()
     {
+      var characters = await _context.Characters
+        .Include(c => c.Weapon)
+        .Include(c => c.Skills)
+        .Where(c => c.User!.Id == GetUserId())
+        .ToListAsync();
       var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
+      serviceResponse.Data = characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList();
+      return serviceResponse;
+    }
+    public async Task<ServiceResponse<GetCharacterDto>> GetCharacterWithId(int id)
+    {
+      var character = await _context.Characters
+        .Include(c => c.Weapon)
+        .Include(c => c.Skills)
+        .FirstOrDefaultAsync(c => c.Id == id);
+      var serviceResponse = new ServiceResponse<GetCharacterDto>();
+      serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
+      return serviceResponse;
+    }
+    public async Task<ServiceResponse<List<GetCharacterDto>>> CreateCharacter(AddCharacterDto newCharacter)
+    {
       var character = _mapper.Map<Character>(newCharacter);
       character.User = await _context.Users.FirstOrDefaultAsync(u => u.Id == GetUserId());
-
       _context.Characters.Add(character);
       await _context.SaveChangesAsync();
+
+      var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
       serviceResponse.Data = await _context.Characters
         .Where(c => c.User!.Id == GetUserId())
         .Select(c => _mapper.Map<GetCharacterDto>(c))
         .ToListAsync();
       return serviceResponse;
     }
-
     public async Task<ServiceResponse<List<GetCharacterDto>>> DeleteCharacter(int id)
     {
       var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
@@ -56,28 +74,6 @@ namespace Services.CharacterService
         serviceResponse.Message = ex.Message;
       }
 
-      return serviceResponse;
-    }
-
-    public async Task<ServiceResponse<List<GetCharacterDto>>> GetAllCharacters()
-    {
-      var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
-      var dbCharacters = await _context.Characters
-        .Include(c => c.Weapon)
-        .Include(c => c.Skills).Where(c => c.User!.Id == GetUserId())
-        .ToListAsync();
-      serviceResponse.Data = dbCharacters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList();
-      return serviceResponse;
-    }
-
-    public async Task<ServiceResponse<GetCharacterDto>> GetCharacterById(int id)
-    {
-      var serviceResponse = new ServiceResponse<GetCharacterDto>();
-      var dbCharacter = await _context.Characters
-        .Include(c => c.Weapon)
-        .Include(c => c.Skills)
-        .FirstOrDefaultAsync(c => c.Id == id);
-      serviceResponse.Data = _mapper.Map<GetCharacterDto>(dbCharacter);
       return serviceResponse;
     }
 
@@ -122,7 +118,7 @@ namespace Services.CharacterService
           .Include(c => c.Skills)
           .FirstOrDefaultAsync(c => c.Id == newCharacterSkill.CharacterId && c.User!.Id == GetUserId());
 
-        if(character is null)
+        if (character is null)
         {
           response.Success = false;
           response.Message = "Character not found.";
@@ -132,7 +128,7 @@ namespace Services.CharacterService
         var skill = await _context.Skills
           .FirstOrDefaultAsync(s => s.Id == newCharacterSkill.SkillId);
 
-        if(skill is null)
+        if (skill is null)
         {
           response.Success = false;
           response.Message = "Skill not found.";

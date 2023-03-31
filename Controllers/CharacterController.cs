@@ -13,22 +13,22 @@ namespace Controllers
     [HttpGet]
     public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Get()
     {
-      return Ok(await _characterService.GetAllCharacters());
+      return Ok(await _characterService.GetCharacterWithUser());
     }
     [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Get(int id)
     {
-      return Ok(await _characterService.GetCharacterById(id));
+      return Ok(await _characterService.GetCharacterWithId(id));
     }
     [HttpPost]
-    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> AddCharacter(AddCharacterDto newCharacter)
+    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Post(AddCharacterDto newCharacter)
     {
-      return Ok(await _characterService.AddCharacter(newCharacter));
+      return Ok(await _characterService.CreateCharacter(newCharacter));
     }
     [AllowAnonymous]
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> DeleteCharacter(int id)
+    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Delete(int id)
     {
       var response = await _characterService.DeleteCharacter(id);
       if (response.Data is null)
