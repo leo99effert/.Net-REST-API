@@ -9,6 +9,7 @@ namespace _Net_REST_API
       CreateMap<Weapon, GetWeaponDto>();
       CreateMap<Skill, GetSkillDto>();
       CreateMap<Character, HighScoreDto>();
+      CreateMap<User, GetUserDto>();
     }
   }
 }

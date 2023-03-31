@@ -4,10 +4,37 @@ namespace Data
   {
     private readonly DataContext _context;
     private readonly IConfiguration _configuration;
-    public AuthRepository(DataContext context, IConfiguration configuration)
+    private readonly IMapper _mapper;
+    public AuthRepository(DataContext context, IConfiguration configuration, IMapper mapper)
     {
+      _mapper = mapper;
       _configuration = configuration;
       _context = context;
+    }
+    public async Task<ServiceResponse<GetUserDto>> Register(User user, string password)
+    {
+      var response = new ServiceResponse<GetUserDto>();
+      try
+      {
+        // Check username
+        if (await UserExists(user.Username)) throw new Exception($"User with username {user.Username} already exist.");
+        // Create password
+        CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+        user.PasswordHash = passwordHash;
+        user.PasswordSalt = passwordSalt;
+        // Save
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+        // Create response
+        response.Message = $"User with username {user.Username} was created.";
+        response.Data = _mapper.Map<GetUserDto>(user);
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
+      return response;
     }
     public async Task<ServiceResponse<string>> Login(string username, string password)
     {
@@ -29,27 +56,6 @@ namespace Data
       {
         response.Data = CreateToken(user);
       }
-      return response;
-    }
-
-    public async Task<ServiceResponse<int>> Register(User user, string password)
-    {
-      var response = new ServiceResponse<int>();
-      if (await UserExists(user.Username))
-      {
-        response.Success = false;
-        response.Message = "User already exists.";
-        return response;
-      }
-      CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
-
-      user.PasswordHash = passwordHash;
-      user.PasswordSalt = passwordSalt;
-
-      _context.Users.Add(user);
-      await _context.SaveChangesAsync();
-
-      response.Data = user.Id;
       return response;
     }
 
@@ -110,20 +116,20 @@ namespace Data
       return tokenHandler.WriteToken(token);
     }
 
-    public async Task<ServiceResponse<int>> Delete(int userId)
+    public async Task<ServiceResponse<GetUserDto>> Delete(int userId)
     {
-      var response = new ServiceResponse<int>();
+      var response = new ServiceResponse<GetUserDto>();
       try
       {
         // Get User
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if(user is null) throw new Exception($"User With id {userId} was not found.");
+        if (user is null) throw new Exception($"User With id {userId} was not found.");
         // Save
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
         // Create response
         response.Message = $"User with id {userId} was deleted.";
-        response.Data = user.Id;
+        response.Data = _mapper.Map<GetUserDto>(user);
       }
       catch (Exception ex)
       {
