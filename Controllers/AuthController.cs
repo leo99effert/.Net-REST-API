@@ -10,7 +10,7 @@ namespace Controllers
       _authrepo = authrepo;
     }
 
-    [HttpPost("register")]
+    [HttpPost("Register")]
     public async Task<ActionResult<ServiceResponse<int>>> Register(UserRegisterDto request)
     {
       var response = await _authrepo.Register(new User { Username = request.Username }, request.Password);

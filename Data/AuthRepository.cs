@@ -15,17 +15,17 @@ namespace Data
       var user = await _context.Users
         .FirstOrDefaultAsync(u => u.Username.ToLower().Equals(username.ToLower()));
 
-      if(user is null) 
+      if (user is null)
       {
         response.Success = false;
         response.Message = "User not found";
       }
-      else if(!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+      else if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
       {
         response.Success = false;
         response.Message = "Wrong Password";
       }
-      else 
+      else
       {
         response.Data = CreateToken(user);
       }
@@ -80,7 +80,7 @@ namespace Data
       }
     }
 
-    private string CreateToken(User user) 
+    private string CreateToken(User user)
     {
       var claims = new List<Claim>
       {
@@ -89,7 +89,7 @@ namespace Data
       };
 
       var appSettingsToken = _configuration.GetSection("AppSettings:Token").Value;
-      if(appSettingsToken is null)
+      if (appSettingsToken is null)
         throw new Exception("Appsettings Token is null!");
 
       SymmetricSecurityKey key = new SymmetricSecurityKey(System.Text.Encoding.UTF8
@@ -113,12 +113,23 @@ namespace Data
     public async Task<ServiceResponse<int>> Delete(int userId)
     {
       var response = new ServiceResponse<int>();
-
-      var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-      _context.Users.Remove(user);
-      await _context.SaveChangesAsync();
-
-      response.Data = user.Id;
+      try
+      {
+        // Get User
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if(user is null) throw new Exception($"User With id {userId} was not found.");
+        // Save
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+        // Create response
+        response.Message = $"User with id {userId} was deleted.";
+        response.Data = user.Id;
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
       return response;
     }
   }
