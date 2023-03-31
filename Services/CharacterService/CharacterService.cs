@@ -13,7 +13,6 @@ namespace Services.CharacterService
     }
     private int GetUserId() => int.Parse(_httpContextAccessor.HttpContext!.User
       .FindFirstValue(ClaimTypes.NameIdentifier)!);
-
     public async Task<ServiceResponse<List<GetCharacterDto>>> GetCharacterWithUser()
     {
       var characters = await _context.Characters
@@ -90,7 +89,6 @@ namespace Services.CharacterService
           throw new Exception($"Character with Id '{updatedCharacter.Id}' not found.");
 
         character.Name = updatedCharacter.Name;
-        character.HitPoints = updatedCharacter.HitPoints;
         character.Strength = updatedCharacter.Strength;
         character.Defense = updatedCharacter.Defense;
         character.Intelligence = updatedCharacter.Intelligence;
@@ -116,7 +114,7 @@ namespace Services.CharacterService
         var character = await _context.Characters
           .Include(c => c.Weapon)
           .Include(c => c.Skills)
-          .FirstOrDefaultAsync(c => c.Id == newCharacterSkill.CharacterId && c.User!.Id == GetUserId());
+          .FirstOrDefaultAsync(c => c.Id == newCharacterSkill.CharacterId);
 
         if (character is null)
         {
