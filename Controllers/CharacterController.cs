@@ -37,9 +37,9 @@ namespace Controllers
       return Ok(await _characterService.UpdateCharacter(updatedCharacter));
     }
     [HttpPost("Skill")]
-    public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> AddCharacterSkill(PostCharacterSkillDto newCharacterSkill)
+    public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> PostCharacterSkill(PostCharacterSkillDto newCharacterSkill)
     {
-      return Ok(await _characterService.AddCharacterSkill(newCharacterSkill));
+      return Ok(await _characterService.GiveSkillToCharacter(newCharacterSkill));
     }
   }
 }

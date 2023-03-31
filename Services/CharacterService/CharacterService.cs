@@ -11,28 +11,50 @@ namespace Services.CharacterService
       _context = context;
       _mapper = mapper;
     }
-    private int GetUserId() => int.Parse(_httpContextAccessor.HttpContext!.User
-      .FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private int GetUserId() => int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     public async Task<ServiceResponse<List<GetCharacterDto>>> GetCharacterWithUser()
     {
-      var characters = await _context.Characters
-        .Include(c => c.Weapon)
-        .Include(c => c.Skills)
-        .Where(c => c.User!.Id == GetUserId())
-        .ToListAsync();
-      var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
-      serviceResponse.Data = characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList();
-      return serviceResponse;
+      var response = new ServiceResponse<List<GetCharacterDto>>();
+      try
+      {
+        // Get characters
+        var characters = await _context.Characters
+          .Include(c => c.Weapon)
+          .Include(c => c.Skills)
+          .Where(c => c.User!.Id == GetUserId())
+          .ToListAsync();
+        // Create response
+        response.Message = $"Characters for user with id {GetUserId()}.";
+        response.Data = characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList();
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
+      return response;
     }
     public async Task<ServiceResponse<GetCharacterDto>> GetCharacterWithId(int id)
     {
-      var character = await _context.Characters
+      var response = new ServiceResponse<GetCharacterDto>();
+      try
+      {
+        // Get character
+        var character = await _context.Characters
         .Include(c => c.Weapon)
         .Include(c => c.Skills)
         .FirstOrDefaultAsync(c => c.Id == id);
-      var serviceResponse = new ServiceResponse<GetCharacterDto>();
-      serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
-      return serviceResponse;
+        if (character is null) throw new Exception($"Character with id {id} not found.");
+        // Create response
+        response.Message = $"This is the character with id {id}.";
+        response.Data = _mapper.Map<GetCharacterDto>(character);
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
+      return response;
     }
     public async Task<ServiceResponse<List<GetCharacterDto>>> CreateCharacter(PostCharacterDto newCharacter)
     {
@@ -51,89 +73,65 @@ namespace Services.CharacterService
     public async Task<ServiceResponse<List<GetCharacterDto>>> DeleteCharacter(int id)
     {
       var serviceResponse = new ServiceResponse<List<GetCharacterDto>>();
-
       try
       {
-        var character =
-          await _context.Characters
-            .FirstOrDefaultAsync(c => c.Id == id);
-        if (character is null)
-          throw new Exception($"Character with Id '{id}' not found.");
+        var character = await _context.Characters.FirstOrDefaultAsync(c => c.Id == id);
+        if (character is null) throw new Exception($"Character with Id '{id}' not found.");
 
         _context.Characters.Remove(character);
         await _context.SaveChangesAsync();
-
-        serviceResponse.Data = await _context.Characters
-          .Select(c => _mapper.Map<GetCharacterDto>(c))
-          .ToListAsync();
+        serviceResponse.Data = await _context.Characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToListAsync();
       }
       catch (Exception ex)
       {
         serviceResponse.Success = false;
         serviceResponse.Message = ex.Message;
       }
-
       return serviceResponse;
     }
-
     public async Task<ServiceResponse<GetCharacterDto>> UpdateCharacter(PutCharacterDto updatedCharacter)
     {
       var serviceResponse = new ServiceResponse<GetCharacterDto>();
-
       try
       {
-        var character = await _context.Characters
-          .Include(c => c.User)
-          .FirstOrDefaultAsync(c => c.Id == updatedCharacter.Id);
-        if (character is null)
-          throw new Exception($"Character with Id '{updatedCharacter.Id}' not found.");
+        var character = await _context.Characters.Include(c => c.User).FirstOrDefaultAsync(c => c.Id == updatedCharacter.Id);
+        if (character is null) throw new Exception($"Character with Id '{updatedCharacter.Id}' not found.");
+        else
+        {
+          character.Strength = updatedCharacter.Strength;
+          character.Defense = updatedCharacter.Defense;
+          character.Intelligence = updatedCharacter.Intelligence;
+          character.Class = updatedCharacter.Class;
 
-        character.Strength = updatedCharacter.Strength;
-        character.Defense = updatedCharacter.Defense;
-        character.Intelligence = updatedCharacter.Intelligence;
-        character.Class = updatedCharacter.Class;
-
-        await _context.SaveChangesAsync();
-        serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
+          await _context.SaveChangesAsync();
+          serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
+        }
       }
       catch (Exception ex)
       {
         serviceResponse.Success = false;
         serviceResponse.Message = ex.Message;
       }
-
       return serviceResponse;
     }
-
-    public async Task<ServiceResponse<GetCharacterDto>> AddCharacterSkill(PostCharacterSkillDto newCharacterSkill)
+    public async Task<ServiceResponse<GetCharacterDto>> GiveSkillToCharacter(PostCharacterSkillDto newCharacterSkill)
     {
       var response = new ServiceResponse<GetCharacterDto>();
       try
       {
+        // Get Character
         var character = await _context.Characters
           .Include(c => c.Weapon)
           .Include(c => c.Skills)
           .FirstOrDefaultAsync(c => c.Id == newCharacterSkill.CharacterId);
-
-        if (character is null)
-        {
-          response.Success = false;
-          response.Message = "Character not found.";
-          return response;
-        }
-
-        var skill = await _context.Skills
-          .FirstOrDefaultAsync(s => s.Id == newCharacterSkill.SkillId);
-
-        if (skill is null)
-        {
-          response.Success = false;
-          response.Message = "Skill not found.";
-          return response;
-        }
-
+        if (character is null) throw new Exception("Character not found.");
+        // Get Skill
+        var skill = await _context.Skills.FirstOrDefaultAsync(s => s.Id == newCharacterSkill.SkillId);
+        if (skill is null) throw new Exception("Skill not found.");
+        // Create Character-Skill connection
         character.Skills!.Add(skill);
         await _context.SaveChangesAsync();
+
         response.Data = _mapper.Map<GetCharacterDto>(character);
       }
       catch (Exception ex)
