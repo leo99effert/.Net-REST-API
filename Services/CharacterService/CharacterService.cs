@@ -34,7 +34,7 @@ namespace Services.CharacterService
       serviceResponse.Data = _mapper.Map<GetCharacterDto>(character);
       return serviceResponse;
     }
-    public async Task<ServiceResponse<List<GetCharacterDto>>> CreateCharacter(AddCharacterDto newCharacter)
+    public async Task<ServiceResponse<List<GetCharacterDto>>> CreateCharacter(PostCharacterDto newCharacter)
     {
       var character = _mapper.Map<Character>(newCharacter);
       character.User = await _context.Users.FirstOrDefaultAsync(u => u.Id == GetUserId());
@@ -76,7 +76,7 @@ namespace Services.CharacterService
       return serviceResponse;
     }
 
-    public async Task<ServiceResponse<GetCharacterDto>> UpdateCharacter(UpdateCharacterDto updatedCharacter)
+    public async Task<ServiceResponse<GetCharacterDto>> UpdateCharacter(PutCharacterDto updatedCharacter)
     {
       var serviceResponse = new ServiceResponse<GetCharacterDto>();
 
@@ -88,7 +88,6 @@ namespace Services.CharacterService
         if (character is null)
           throw new Exception($"Character with Id '{updatedCharacter.Id}' not found.");
 
-        character.Name = updatedCharacter.Name;
         character.Strength = updatedCharacter.Strength;
         character.Defense = updatedCharacter.Defense;
         character.Intelligence = updatedCharacter.Intelligence;
@@ -106,7 +105,7 @@ namespace Services.CharacterService
       return serviceResponse;
     }
 
-    public async Task<ServiceResponse<GetCharacterDto>> AddCharacterSkill(AddCharacterSkillDto newCharacterSkill)
+    public async Task<ServiceResponse<GetCharacterDto>> AddCharacterSkill(PostCharacterSkillDto newCharacterSkill)
     {
       var response = new ServiceResponse<GetCharacterDto>();
       try

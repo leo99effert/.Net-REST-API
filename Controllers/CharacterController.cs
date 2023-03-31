@@ -22,7 +22,7 @@ namespace Controllers
     }
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Post(AddCharacterDto newCharacter)
+    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Post(PostCharacterDto newCharacter)
     {
       return Ok(await _characterService.CreateCharacter(newCharacter));
     }
@@ -32,12 +32,12 @@ namespace Controllers
       return Ok(await _characterService.DeleteCharacter(id));
     }
     [HttpPut]
-    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Put(UpdateCharacterDto updatedCharacter)
+    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Put(PutCharacterDto updatedCharacter)
     {
       return Ok(await _characterService.UpdateCharacter(updatedCharacter));
     }
     [HttpPost("Skill")]
-    public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> AddCharacterSkill(AddCharacterSkillDto newCharacterSkill)
+    public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> AddCharacterSkill(PostCharacterSkillDto newCharacterSkill)
     {
       return Ok(await _characterService.AddCharacterSkill(newCharacterSkill));
     }
