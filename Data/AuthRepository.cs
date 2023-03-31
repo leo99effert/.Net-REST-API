@@ -1,6 +1,6 @@
 namespace Data
 {
-  public class AuthRepository : IAuthRepository
+  public class AuthRepository : IAuthRepository   // add getallusers method
   {
     private readonly DataContext _context;
     private readonly IConfiguration _configuration;
@@ -39,27 +39,48 @@ namespace Data
     public async Task<ServiceResponse<string>> Login(string username, string password)
     {
       var response = new ServiceResponse<string>();
-      var user = await _context.Users
-        .FirstOrDefaultAsync(u => u.Username.ToLower().Equals(username.ToLower()));
-
-      if (user is null)
+      try
       {
-        response.Success = false;
-        response.Message = "User not found";
-      }
-      else if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
-      {
-        response.Success = false;
-        response.Message = "Wrong Password";
-      }
-      else
-      {
+        // Get User
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username.ToLower().Equals(username.ToLower()));
+        if (user is null) throw new Exception($"User with username {username} was not found.");
+        if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt)) throw new Exception("Wrong Password.");
+        // Create response
+        response.Message = $"User with username {username} has logged in and received a jwt-token.";
         response.Data = CreateToken(user);
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
+      return response;
+    }
+    public async Task<ServiceResponse<GetUserDto>> Delete(int userId)
+    {
+      var response = new ServiceResponse<GetUserDto>();
+      try
+      {
+        // Get User
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null) throw new Exception($"User With id {userId} was not found.");
+        // Save
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+        // Create response
+        response.Message = $"User with id {userId} was deleted.";
+        response.Data = _mapper.Map<GetUserDto>(user);
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
       }
       return response;
     }
 
-    public async Task<bool> UserExists(string username)
+
+    private async Task<bool> UserExists(string username)
     {
       if (await _context.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower()))
       {
@@ -67,7 +88,6 @@ namespace Data
       }
       return false;
     }
-
     private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
     {
       using (var hmac = new System.Security.Cryptography.HMACSHA512())
@@ -76,7 +96,6 @@ namespace Data
         passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
       }
     }
-
     private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
     {
       using (var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt))
@@ -85,7 +104,6 @@ namespace Data
         return computedHash.SequenceEqual(passwordHash);
       }
     }
-
     private string CreateToken(User user)
     {
       var claims = new List<Claim>
@@ -114,29 +132,6 @@ namespace Data
       SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
 
       return tokenHandler.WriteToken(token);
-    }
-
-    public async Task<ServiceResponse<GetUserDto>> Delete(int userId)
-    {
-      var response = new ServiceResponse<GetUserDto>();
-      try
-      {
-        // Get User
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if (user is null) throw new Exception($"User With id {userId} was not found.");
-        // Save
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
-        // Create response
-        response.Message = $"User with id {userId} was deleted.";
-        response.Data = _mapper.Map<GetUserDto>(user);
-      }
-      catch (Exception ex)
-      {
-        response.Success = false;
-        response.Message = ex.Message;
-      }
-      return response;
     }
   }
 }
