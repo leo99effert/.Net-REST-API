@@ -39,7 +39,7 @@ namespace Services.CharacterService
       {
         var character =
           await _context.Characters
-            .FirstOrDefaultAsync(c => c.Id == id && c.User!.Id == GetUserId());
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (character is null)
           throw new Exception($"Character with Id '{id}' not found.");
 
@@ -47,7 +47,6 @@ namespace Services.CharacterService
         await _context.SaveChangesAsync();
 
         serviceResponse.Data = await _context.Characters
-          .Where(c => c.User!.Id == GetUserId())
           .Select(c => _mapper.Map<GetCharacterDto>(c))
           .ToListAsync();
       }
@@ -77,7 +76,7 @@ namespace Services.CharacterService
       var dbCharacter = await _context.Characters
         .Include(c => c.Weapon)
         .Include(c => c.Skills)
-        .FirstOrDefaultAsync(c => c.Id == id && c.User!.Id == GetUserId());
+        .FirstOrDefaultAsync(c => c.Id == id);
       serviceResponse.Data = _mapper.Map<GetCharacterDto>(dbCharacter);
       return serviceResponse;
     }
@@ -91,7 +90,7 @@ namespace Services.CharacterService
         var character = await _context.Characters
           .Include(c => c.User)
           .FirstOrDefaultAsync(c => c.Id == updatedCharacter.Id);
-        if (character is null || character.User!.Id != GetUserId())
+        if (character is null)
           throw new Exception($"Character with Id '{updatedCharacter.Id}' not found.");
 
         character.Name = updatedCharacter.Name;
