@@ -70,6 +70,8 @@ namespace Services.Character
         // Create response
         response.Message = $"The characters that belongs to user with id {GetUserId()}.";
         response.Data = await _context.Characters
+          .Include(c => c.Weapon)
+          .Include(c => c.Skills)
           .Where(c => c.User!.Id == GetUserId())
           .Select(c => _mapper.Map<GetCharacterDto>(c))
           .ToListAsync();
@@ -94,7 +96,7 @@ namespace Services.Character
         await _context.SaveChangesAsync();
         // Create response
         response.Message = "All characters.";
-        response.Data = await _context.Characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToListAsync();
+        response.Data = await _context.Characters.Include(c => c.Weapon).Include(c => c.Skills).Select(c => _mapper.Map<GetCharacterDto>(c)).ToListAsync();
       }
       catch (Exception ex)
       {
@@ -109,7 +111,7 @@ namespace Services.Character
       try
       {
         // Get character
-        var character = await _context.Characters.Include(c => c.User).FirstOrDefaultAsync(c => c.Id == updatedCharacter.Id);
+        var character = await _context.Characters.Include(c => c.Weapon).Include(c => c.Skills).FirstOrDefaultAsync(c => c.Id == updatedCharacter.Id);
         if (character is null) throw new Exception($"Character with Id '{updatedCharacter.Id}' not found.");
         // Alter character
         character.Strength = updatedCharacter.Strength;

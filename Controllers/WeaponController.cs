@@ -10,11 +10,10 @@ namespace Controllers
     {
       _weaponService = weaponService;
     }
-
     [HttpPost]
-    public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> AddWeapon(AddWeaponDto newWeapon)
+    public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> Post(PostWeaponDto newWeapon)
     {
-        return Ok(await _weaponService.AddWeapon(newWeapon));
+      return Ok(await _weaponService.CreateWeapon(newWeapon));
     }
   }
 }
