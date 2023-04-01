@@ -1,4 +1,4 @@
-namespace Services.WeaponService
+namespace Services.Weapon
 {
   public class WeaponService : IWeaponService
   {
@@ -27,7 +27,7 @@ namespace Services.WeaponService
             return response;
         }
 
-        var weapon = new Weapon
+        var weapon = new Models.Weapon
         {
             Name = newWeapon.Name,
             Damage = newWeapon.Damage,

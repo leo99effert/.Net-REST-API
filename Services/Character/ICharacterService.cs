@@ -1,4 +1,4 @@
-namespace Services.CharacterService
+namespace Services.Character
 {
   public interface ICharacterService
   {

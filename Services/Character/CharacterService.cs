@@ -1,4 +1,4 @@
-namespace Services.CharacterService
+namespace Services.Character
 {
   public class CharacterService : ICharacterService
   {
@@ -62,7 +62,7 @@ namespace Services.CharacterService
       try
       {
         // Create character
-        var character = _mapper.Map<Character>(newCharacter);
+        var character = _mapper.Map<Models.Character>(newCharacter);
         character.User = await _context.Users.FirstOrDefaultAsync(u => u.Id == GetUserId());
         // Save character
         _context.Characters.Add(character);

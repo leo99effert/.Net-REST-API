@@ -1,4 +1,4 @@
-namespace Services.FightService
+namespace Services.Fight
 {
   public interface IFightService
     {

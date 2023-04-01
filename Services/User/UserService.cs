@@ -1,17 +1,17 @@
-namespace Data
+namespace Services.User
 {
-  public class AuthRepository : IAuthRepository
+  public class UserService : IUserService
   {
     private readonly DataContext _context;
     private readonly IConfiguration _configuration;
     private readonly IMapper _mapper;
-    public AuthRepository(DataContext context, IConfiguration configuration, IMapper mapper)
+    public UserService(DataContext context, IConfiguration configuration, IMapper mapper)
     {
       _mapper = mapper;
       _configuration = configuration;
       _context = context;
     }
-    public async Task<ServiceResponse<GetUserDto>> Register(User user, string password)
+    public async Task<ServiceResponse<GetUserDto>> Register(Models.User user, string password)
     {
       var response = new ServiceResponse<GetUserDto>();
       try
@@ -122,7 +122,7 @@ namespace Data
         return computedHash.SequenceEqual(passwordHash);
       }
     }
-    private string CreateToken(User user)
+    private string CreateToken(Models.User user)
     {
       var claims = new List<Claim>
       {

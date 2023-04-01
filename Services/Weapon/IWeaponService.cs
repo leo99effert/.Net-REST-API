@@ -1,4 +1,4 @@
-namespace Services.WeaponService
+namespace Services.Weapon
 {
   public interface IWeaponService
     {

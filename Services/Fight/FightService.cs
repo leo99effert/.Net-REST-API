@@ -1,4 +1,4 @@
-namespace Services.FightService
+namespace Services.Fight
 {
   public class FightService : IFightService
   {
@@ -130,7 +130,7 @@ namespace Services.FightService
       return response;
     }
 
-    private static int DoSkillAttack(Character attacker, Character opponent, Skill skill)
+    private static int DoSkillAttack(Models.Character attacker, Models.Character opponent, Skill skill)
     {
       int damage = skill.Damage + (new Random().Next(attacker.Intelligence));
       damage -= new Random().Next(opponent.Defense);
@@ -179,7 +179,7 @@ namespace Services.FightService
       return response;
     }
 
-    private static int DoWeaponAttack(Character attacker, Character opponent)
+    private static int DoWeaponAttack(Models.Character attacker, Models.Character opponent)
     {
       if(attacker.Weapon is null)
         throw new Exception("Attacker has no weapon...");
