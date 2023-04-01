@@ -1,6 +1,6 @@
 namespace Data
 {
-  public class AuthRepository : IAuthRepository   // add getallusers method
+  public class AuthRepository : IAuthRepository
   {
     private readonly DataContext _context;
     private readonly IConfiguration _configuration;
@@ -48,6 +48,24 @@ namespace Data
         // Create response
         response.Message = $"User with username {username} has logged in and received a jwt-token.";
         response.Data = CreateToken(user);
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
+      return response;
+    }
+    public async Task<ServiceResponse<List<GetUserDto>>> GetUsers()
+    {
+      var response = new ServiceResponse<List<GetUserDto>>();
+      try
+      {
+        // Get Users
+        var users = await _context.Users.Include(u => u.Characters).ToListAsync();
+        // Create response
+        response.Message = "All users.";
+        response.Data = users.Select(u => _mapper.Map<GetUserDto>(u)).ToList();
       }
       catch (Exception ex)
       {

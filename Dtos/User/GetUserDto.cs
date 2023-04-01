@@ -4,6 +4,6 @@ namespace Dtos.User
     {
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
-        public List<Models.Character>? Characters { get; set; }
+        public List<GetMinimalCharacterDto>? Characters { get; set; }
     }
 }

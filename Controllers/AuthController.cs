@@ -24,6 +24,11 @@ namespace Controllers
       if (!response.Success) return BadRequest(response);
       return Ok(response);
     }
+    [HttpGet]
+    public async Task<ActionResult<ServiceResponse<List<GetUserDto>>>> Get()
+    {
+      return Ok(await _authrepo.GetUsers());
+    }
     [HttpDelete]
     public async Task<ActionResult<ServiceResponse<int>>> Delete(int userId)
     {

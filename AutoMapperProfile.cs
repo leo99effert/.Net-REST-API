@@ -10,6 +10,7 @@ namespace _Net_REST_API
       CreateMap<Skill, GetSkillDto>();
       CreateMap<Character, HighScoreDto>();
       CreateMap<User, GetUserDto>();
+      CreateMap<Character, GetMinimalCharacterDto>();
     }
   }
 }
