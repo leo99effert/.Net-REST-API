@@ -35,5 +35,29 @@ namespace Services.Weapon
       }
       return response;
     }
+    public async Task<ServiceResponse<GetCharacterDto>> DeleteWeapon(int weaponId)
+    {
+      var response = new ServiceResponse<GetCharacterDto>();
+      try
+      {
+        // Get weapon
+        var weapon = await _context.Weapons.FirstOrDefaultAsync(w => w.Id == weaponId);
+        if(weapon is null) throw new Exception($"Weapon with id {weaponId} was not found.");
+        int characterId = weapon.CharacterId;
+        // Save
+        _context.Weapons.Remove(weapon);
+        await _context.SaveChangesAsync();
+        // Create response
+        var character = await _context.Characters.Include(c => c.Weapon).Include(c => c.Skills).FirstOrDefaultAsync(c => c.Id == characterId);
+        response.Message = "Character with deleted weapon.";
+        response.Data = _mapper.Map<GetCharacterDto>(character);
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
+      return response;
+    }
   }
 }

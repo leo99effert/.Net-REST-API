@@ -1,6 +1,5 @@
 namespace Controllers
 {
-  [Authorize]
   [ApiController]
   [Route("[controller]")]
   public class WeaponController : ControllerBase
@@ -10,10 +9,20 @@ namespace Controllers
     {
       _weaponService = weaponService;
     }
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> Post(PostWeaponDto newWeapon)
     {
-      return Ok(await _weaponService.CreateWeapon(newWeapon));
+      var response = await _weaponService.CreateWeapon(newWeapon);
+      if(response.Success) return Ok(response);
+      return BadRequest(response);
+    }
+    [HttpDelete]
+    public async Task<ActionResult<ServiceResponse<GetCharacterDto>>> Delete(int weaponId)
+    {
+      var response = await _weaponService.DeleteWeapon(weaponId);
+      if(response.Success) return Ok(response);
+      return BadRequest(response);
     }
   }
 }
