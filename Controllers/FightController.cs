@@ -9,26 +9,19 @@ namespace Controllers
     {
       _fightService = fightService;
     }
-
-    [HttpPost("Weapon")]
-    public async Task<ActionResult<ServiceResponse<AttackResultDto>>> WeaponAttack(WeaponAttackDto request) 
-    {
-        return Ok(await _fightService.WeaponAttack(request));
-    }
-    [HttpPost("Skill")]
-    public async Task<ActionResult<ServiceResponse<AttackResultDto>>> SkillAttack(SkillAttackDto request) 
-    {
-        return Ok(await _fightService.SkillAttack(request));
-    }
     [HttpPost]
-    public async Task<ActionResult<ServiceResponse<FightResultDto>>> Fight(FightRequestDto request) 
+    public async Task<ActionResult<ServiceResponse<FightResultDto>>> Post(FightRequestDto request)
     {
-        return Ok(await _fightService.Fight(request));
+      var response = await _fightService.Fight(request);
+      if(response.Success) return Ok(response);
+      return BadRequest(response);
     }
     [HttpGet]
-    public async Task<ActionResult<ServiceResponse<List<HighScoreDto>>>> GetHighScore() 
+    public async Task<ActionResult<ServiceResponse<List<HighScoreDto>>>> Get()
     {
-        return Ok(await _fightService.GetHighScore());
+      var response = await _fightService.ShowHighScore();
+      if(response.Success) return Ok(response);
+      return BadRequest(response);
     }
   }
 }

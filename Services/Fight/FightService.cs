@@ -7,72 +7,83 @@ namespace Services.Fight
     public FightService(DataContext context, IMapper mapper)
     {
       _mapper = mapper;
-      _context = context;   
+      _context = context;
     }
-
     public async Task<ServiceResponse<FightResultDto>> Fight(FightRequestDto request)
     {
-      var response = new ServiceResponse<FightResultDto>
-      {
-        Data = new FightResultDto()
-      };
+      var response = new ServiceResponse<FightResultDto>();
+      response.Data = new FightResultDto();
       try
       {
+        // Get characters
         var characters = await _context.Characters
           .Include(c => c.Weapon)
           .Include(c => c.Skills)
           .Where(c => request.CharacterIds.Contains(c.Id))
           .ToListAsync();
-
-        bool defeated = false;
-        while(!defeated)
+        // Enter fight loop
+        bool characterIsDefeated = false;
+        while (characterIsDefeated is false)
         {
-          foreach(var attacker in characters)
+          foreach (var attacker in characters)
           {
+            // Pick opponent
             var opponents = characters.Where(c => c.Id != attacker.Id).ToList();
             var opponent = opponents[new Random().Next(opponents.Count)];
-
+            // Prepare attack
             int damage = 0;
             string attackUsed = string.Empty;
-
+            // Pick weapon (1) or skill (0)
             bool useWeapon = new Random().Next(2) == 0;
-            if(useWeapon && attacker.Weapon is not null)
+            // Attack with weapon
+            if (useWeapon && attacker.Weapon is not null)
             {
               attackUsed = attacker.Weapon.Name;
-              damage = DoWeaponAttack(attacker, opponent);
+              damage = WeaponAttack(attacker, opponent);
             }
-            else if(!useWeapon && attacker.Skills is not null && attacker.Skills.Count > 0)
+            // Attack with skill
+            else if (useWeapon is false && attacker.Skills is not null && attacker.Skills.Count > 0)
             {
               var skill = attacker.Skills[new Random().Next(attacker.Skills.Count)];
               attackUsed = skill.Name;
-              damage = DoSkillAttack(attacker, opponent, skill);
+              damage = SkillAttack(attacker, opponent, skill);
             }
+            // After trying to use non existing weapon or skill
             else
             {
               response.Data.Log.Add($"{attacker.Name} wasnt able to attack!");
               continue;
             }
-
-            response.Data.Log
-              .Add($"{attacker.Name} attack {opponent.Name} using {attackUsed} with {(damage >= 0 ? damage : 0)} damage");
-            
-            if(opponent.HitPoints <= 0)
+            // Write log
+            response.Data.Log.Add($"{attacker.Name} attack {opponent.Name} using {attackUsed} with {(damage >= 0 ? damage : 0)} damage");
+            // handle defeat
+            if (opponent.HitPoints <= 0)
             {
-              defeated = true;
+              // HighScore updates
               attacker.Victories++;
               opponent.Defeats++;
-              response.Data.Log.Add($"{opponent.Name} has been defeated");
-              response.Data.Log.Add($"{attacker.Name} winswith {attacker.HitPoints} HP left");
+              // Write logs
+              response.Message = "Battle log";
+              response.Data.Log.Add($"{attacker.Name} has defeated {opponent.Name}.");
+              response.Data.Log.Add("HitPoints:");
+              characters.ForEach(c => { response.Data.Log.Add($"{c.Name} - {(c.HitPoints > 0 ? c.HitPoints : 0)}"); });
+              // // Stats to balance game
+              // opponent.Strength += 5;
+              // opponent.Defense += 5;
+              // opponent.Intelligence += 5;
+              // End Loop
+              characterIsDefeated = true;
               break;
             }
           }
         }
-
-        characters.ForEach(c => {
+        // After game stats change
+        characters.ForEach(c =>
+        {
           c.Fights++;
           c.HitPoints = 100;
         });
-
+        // Save
         await _context.SaveChangesAsync();
       }
       catch (Exception ex)
@@ -82,129 +93,59 @@ namespace Services.Fight
       }
       return response;
     }
-
-    public async Task<ServiceResponse<AttackResultDto>> SkillAttack(SkillAttackDto request)
+    public async Task<ServiceResponse<List<HighScoreDto>>> ShowHighScore()
     {
-      var response = new ServiceResponse<AttackResultDto>();
+      var response = new ServiceResponse<List<HighScoreDto>>();
       try
       {
-        var attacker = await _context.Characters
-            .Include(c => c.Skills)
-            .FirstOrDefaultAsync(c => c.Id == request.AttackerId);
-        var opponent = await _context.Characters
-            .FirstOrDefaultAsync(c => c.Id == request.OpponentId);
-
-        if (attacker is null || opponent is null || attacker.Skills is null)
-          throw new Exception("Null value...");
-
-        var skill = attacker.Skills.FirstOrDefault(s => s.Id == request.SkillId);
-        if (skill is null)
-        {
-          response.Success = false;
-          response.Message = $"{attacker.Name} doesnt know that skill!";
-          return response;
-        }
-
-        int damage = DoSkillAttack(attacker, opponent, skill);
-
-        if (opponent.HitPoints <= 0)
-          response.Message = $"{opponent.Name} has been defeated";
-
-        await _context.SaveChangesAsync();
-
-        response.Data = new AttackResultDto
-        {
-          Attacker = attacker.Name,
-          Opponent = opponent.Name,
-          AttackerHP = attacker.HitPoints,
-          OpponentHP = opponent.HitPoints,
-          Damage = damage
-        };
+        // Get characters
+        var characters = await _context.Characters
+          .OrderByDescending(c => c.Victories)
+          .ThenBy(c => c.Defeats)
+          .ToListAsync();
+        // Create response
+        response.Message = "High Score List";
+        response.Data = characters.Select(c => _mapper.Map<HighScoreDto>(c)).ToList();
       }
       catch (Exception ex)
       {
         response.Success = false;
         response.Message = ex.Message;
       }
-
       return response;
     }
 
-    private static int DoSkillAttack(Models.Character attacker, Models.Character opponent, Skill skill)
+    private static int WeaponAttack(Models.Character attacker, Models.Character opponent)
     {
-      int damage = skill.Damage + (new Random().Next(attacker.Intelligence));
+      // Get damage
+      int damage = (new Random().Next(attacker.Weapon!.Damage)) + (new Random().Next(attacker.Strength));
+      // Use defense
       damage -= new Random().Next(opponent.Defense);
+      // Reduce hitpoints
+      if (damage > 0) opponent.HitPoints -= damage;
+      // Alter stats
+      if(attacker.Weapon.Damage > 1) attacker.Weapon.Damage--;
+      if(attacker.Intelligence > 1) attacker.Intelligence--;
+      if(opponent.Intelligence > 1) opponent.Intelligence -= 2;
+      attacker.Strength += 2;
+      opponent.Defense += 2;
 
-      if (damage > 0)
-        opponent.HitPoints -= damage;
       return damage;
     }
-
-    public async Task<ServiceResponse<AttackResultDto>> WeaponAttack(WeaponAttackDto request)
+    private static int SkillAttack(Models.Character attacker, Models.Character opponent, Skill skill)
     {
-      var response = new ServiceResponse<AttackResultDto>();
-      try
-      {
-        var attacker = await _context.Characters
-            .Include(c => c.Weapon)
-            .FirstOrDefaultAsync(c => c.Id == request.AttackerId);
-        var opponent = await _context.Characters
-            .FirstOrDefaultAsync(c => c.Id == request.OpponentId);
+      // Get damage
+      int damage =  (new Random().Next(skill.Damage)) + (new Random().Next(attacker.Intelligence));
+      // Use defense
+      damage -= (new Random().Next(opponent.Defense)) / 2;
+      // Reduce hitpoints
+      if (damage > 0) opponent.HitPoints -= damage;
+      // Alter stats
+      if(opponent.Defense > 1) opponent.Defense--;
+      attacker.Intelligence += 2;
+      opponent.Intelligence++;
 
-        if (attacker is null || opponent is null || attacker.Weapon is null)
-          throw new Exception("Null value...");
-
-        int damage = DoWeaponAttack(attacker, opponent);
-
-        if (opponent.HitPoints <= 0)
-          response.Message = $"{opponent.Name} has been defeated";
-
-        await _context.SaveChangesAsync();
-
-        response.Data = new AttackResultDto
-        {
-          Attacker = attacker.Name,
-          Opponent = opponent.Name,
-          AttackerHP = attacker.HitPoints,
-          OpponentHP = opponent.HitPoints,
-          Damage = damage
-        };
-      }
-      catch (Exception ex)
-      {
-        response.Success = false;
-        response.Message = ex.Message;
-      }
-
-      return response;
-    }
-
-    private static int DoWeaponAttack(Models.Character attacker, Models.Character opponent)
-    {
-      if(attacker.Weapon is null)
-        throw new Exception("Attacker has no weapon...");
-
-      int damage = attacker.Weapon.Damage + (new Random().Next(attacker.Strength));
-      damage -= new Random().Next(opponent.Defense);
-
-      if (damage > 0)
-        opponent.HitPoints -= damage;
       return damage;
-    }
-
-    public async Task<ServiceResponse<List<HighScoreDto>>> GetHighScore()
-    {
-      var characters = await _context.Characters
-        .Where(c => c.Fights > 0)
-        .OrderByDescending(c => c.Victories)
-        .ThenBy(c => c.Defeats)
-        .ToListAsync();
-
-      var response = new ServiceResponse<List<HighScoreDto>>()
-      {
-        Data = characters.Select(c => _mapper.Map<HighScoreDto>(c)).ToList()
-      };
-      return response;
     }
   }
 }
