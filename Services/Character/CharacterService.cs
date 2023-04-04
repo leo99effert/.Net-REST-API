@@ -131,7 +131,7 @@ namespace Services.Character
       }
       return response;
     }
-    public async Task<ServiceResponse<GetCharacterDto>> GiveSkillToCharacter(PostCharacterSkillDto newCharacterSkill)
+    public async Task<ServiceResponse<GetCharacterDto>> UpdateSkills(PutSkillsDto newSkills)
     {
       var response = new ServiceResponse<GetCharacterDto>();
       try
@@ -140,16 +140,16 @@ namespace Services.Character
         var character = await _context.Characters
           .Include(c => c.Weapon)
           .Include(c => c.Skills)
-          .FirstOrDefaultAsync(c => c.Id == newCharacterSkill.CharacterId);
+          .FirstOrDefaultAsync(c => c.Id == newSkills.CharacterId);
         if (character is null) throw new Exception("Character not found.");
-        // Get Skill
-        var skill = await _context.Skills.FirstOrDefaultAsync(s => s.Id == newCharacterSkill.SkillId);
-        if (skill is null) throw new Exception("Skill not found.");
+        // Get Skills
+        var skills = await _context.Skills.Where(s => newSkills.Skills.Contains(s.Id)).ToListAsync();
         // Create Character-Skill connection
-        character.Skills!.Add(skill);
+        character.Skills!.Clear();
+        foreach (var skill in skills) character.Skills!.Add(skill);
         await _context.SaveChangesAsync();
         // Create response
-        response.Message = "Character with new skill.";
+        response.Message = "Character with new skills.";
         response.Data = _mapper.Map<GetCharacterDto>(character);
       }
       catch (Exception ex)
