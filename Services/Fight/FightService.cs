@@ -51,11 +51,11 @@ namespace Services.Fight
             // After trying to use non existing weapon or skill
             else
             {
-              response.Data.Log.Add($"{attacker.Name} wasnt able to attack!");
+              response.Data.Log.Add($"...................................................({attacker.Name} wasnt able to attack...)");
               continue;
             }
             // Write log
-            response.Data.Log.Add($"{attacker.Name} attack {opponent.Name} using {attackUsed} with {(damage >= 0 ? damage : 0)} damage");
+            response.Data.Log.Add($"{attacker.Name} attacks {opponent.Name} || {attackUsed}: {(damage >= 0 ? damage : 0)} damage");
             // handle defeat
             if (opponent.HitPoints <= 0)
             {
@@ -65,19 +65,20 @@ namespace Services.Fight
               // Write logs
               response.Message = "Battle log";
               response.Data.Log.Add($"{attacker.Name} has defeated {opponent.Name}.");
-              response.Data.Log.Add("HitPoints:");
-              characters.ForEach(c => { response.Data.Log.Add($"{c.Name} - {(c.HitPoints > 0 ? c.HitPoints : 0)}"); });
-              // // Stats to balance game
-              // opponent.Strength += 5;
-              // opponent.Defense += 5;
-              // opponent.Intelligence += 5;
+              response.Data.Log.Add("HitPoints Left...");
+              characters.ForEach(c => { response.Data.Log.Add($"{c.Name}: {(c.HitPoints > 0 ? c.HitPoints : 0)}"); });
+              // After game stats change
+              attacker.Strength++;          // Bonus for winning
+              attacker.Intelligence++;      // Bonus for winning
+              opponent.Strength += 2;       // To help catch up
+              opponent.Intelligence += 2;   // To help catch up
+              opponent.Defense += 5;        // To help catch up
               // End Loop
               characterIsDefeated = true;
               break;
             }
           }
         }
-        // After game stats change
         characters.ForEach(c =>
         {
           c.Fights++;
@@ -125,9 +126,11 @@ namespace Services.Fight
       if (damage > 0) opponent.HitPoints -= damage;
       // Alter stats
       if(attacker.Weapon.Damage > 1) attacker.Weapon.Damage--;
+      if(opponent.Intelligence > 1) opponent.Intelligence--;
       if(attacker.Intelligence > 1) attacker.Intelligence--;
-      if(opponent.Intelligence > 1) opponent.Intelligence -= 2;
-      attacker.Strength += 2;
+      if(opponent.Strength > 1) opponent.Strength--;
+      if(attacker.Defense > 1) attacker.Defense--;
+      attacker.Strength++;
       opponent.Defense += 2;
 
       return damage;
@@ -142,7 +145,7 @@ namespace Services.Fight
       if (damage > 0) opponent.HitPoints -= damage;
       // Alter stats
       if(opponent.Defense > 1) opponent.Defense--;
-      attacker.Intelligence += 2;
+      attacker.Intelligence++;
       opponent.Intelligence++;
 
       return damage;
