@@ -105,6 +105,40 @@ namespace Services.Character
       }
       return response;
     }
+    public async Task<ServiceResponse<List<GetCharacterDto>>> ResetCharacters()
+    {
+      var response = new ServiceResponse<List<GetCharacterDto>>();
+      try
+      {
+        // Get characters
+        var characters = await _context.Characters
+          .Include(c => c.Weapon)
+          .Include(c => c.Skills)
+          .ToListAsync();
+        // Reset characters
+        foreach (var character in characters)
+        {
+          character.Strength = 10;
+          character.Defense = 10;
+          character.Intelligence = 10;
+          if (character.Weapon is not null) _context.Weapons.Remove(character.Weapon);
+          _context.Weapons.Add( new Models.Weapon { Character = character, Name = "Basic Sword", Damage = 20});
+          character.Skills!.Clear();
+          var skill = await _context.Skills.FirstOrDefaultAsync(s => s.Id == 1);
+          character.Skills.Add(skill!);
+          await _context.SaveChangesAsync();
+        }
+        // Create response
+        response.Message = $"Characters with standard values";
+        response.Data = characters.Select(c => _mapper.Map<GetCharacterDto>(c)).ToList();
+      }
+      catch (Exception ex)
+      {
+        response.Success = false;
+        response.Message = ex.Message;
+      }
+      return response;
+    }
     public async Task<ServiceResponse<GetCharacterDto>> UpdateCharacter(PutCharacterDto updatedCharacter)
     {
       var response = new ServiceResponse<GetCharacterDto>();

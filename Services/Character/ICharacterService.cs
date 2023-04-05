@@ -6,6 +6,7 @@ namespace Services.Character
     Task<ServiceResponse<GetCharacterDto>> GetCharacterWithId(int id);
     Task<ServiceResponse<List<GetCharacterDto>>> CreateCharacter(PostCharacterDto newCharacter);
     Task<ServiceResponse<List<GetCharacterDto>>> DeleteCharacter(int id);
+    Task<ServiceResponse<List<GetCharacterDto>>> ResetCharacters();
     Task<ServiceResponse<GetCharacterDto>> UpdateCharacter(PutCharacterDto updatedCharacter);
     Task<ServiceResponse<GetCharacterDto>> UpdateSkills(PutSkillsDto newSkills);
   }

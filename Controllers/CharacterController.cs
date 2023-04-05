@@ -2,7 +2,7 @@ namespace Controllers
 {
   [ApiController]
   [Route("api/[controller]")]
-  public class CharacterController : ControllerBase
+  public class CharacterController : ControllerBase  // Add a reset method
   {
     private readonly ICharacterService _characterService;
     public CharacterController(ICharacterService characterService)
@@ -37,6 +37,13 @@ namespace Controllers
     {
       var response = await _characterService.DeleteCharacter(id);
       if (response.Success) return Ok(response);
+      return BadRequest(response);
+    }
+    [HttpPut("Reset")]
+    public async Task<ActionResult<ServiceResponse<List<GetCharacterDto>>>> Reset()
+    {
+      var response = await _characterService.ResetCharacters();
+      if(response.Success) return Ok(response);
       return BadRequest(response);
     }
     [HttpPut]
